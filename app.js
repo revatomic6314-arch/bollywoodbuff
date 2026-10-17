@@ -16,9 +16,11 @@ function sortedPlayers(){return [...participants].sort((a,b)=>b.score-a.score||n
 function leaderboard(){let ps=sortedPlayers();return `<div class="leaderboard"><div class="panelTop"><span>LIVE LEADERBOARD</span><span>${ps.length} PLAYERS</span></div>${ps.length?`<ol>${ps.map((p,i)=>`<li><span class="rank">${String(i+1).padStart(2,'0')}</span><span class="playerName">${esc(p.name)}</span><strong>${p.score}</strong></li>`).join('')}</ol>`:'<p class="muted">Waiting for participants…</p>'}</div>`}
 function statusLine(){return `<div class="statusline"><span class="pill">${esc(quiz?.status?.toUpperCase())}</span><span>${hostMode?`Participants: ${participants.length}/30`:`Player: ${esc(participant?.name)}`}</span>${!hostMode?`<span>Score: ${participants.find(p=>p.id===participant?.id)?.score??0}</span>`:''}</div>`}
 function render(){
+ const active = app.contains(document.activeElement) && document.activeElement.matches('input,textarea') ? {name:document.activeElement.name, value:document.activeElement.value, start:document.activeElement.selectionStart, end:document.activeElement.selectionEnd} : null;
+ const restoreInput = () => { if(!active) return; const el=[...app.querySelectorAll('input,textarea')].find(x=>x.name===active.name); if(el){ el.value=active.value; el.focus({preventScroll:true}); try{el.setSelectionRange(active.start,active.end)}catch{}} };
  tag.textContent=hostMode?'MASTER SCREEN':'PICTURE ABHI BAAKI HAI MERE DOST';
  if(hostMode){
-  if(!user){app.innerHTML=`<div class="panelTop"><span>HOST CONTROL</span><span>CODE: BUFF</span></div><form id="login" class="stack"><h2>Host access</h2><p>Sign in with the host account created in Supabase Authentication.</p><label>Email<input name="email" type="email" required></label><label>Password<input name="password" type="password" required></label><button ${busy?'disabled':''}>Sign in</button></form>${message()}`;return}
+  if(!user){app.innerHTML=`<div class="panelTop"><span>HOST CONTROL</span><span>CODE: BUFF</span></div><form id="login" class="stack"><h2>Host access</h2><p>Sign in with the host account created in Supabase Authentication.</p><label>Email<input name="email" type="email" required></label><label>Password<input name="password" type="password" required></label><button ${busy?'disabled':''}>Sign in</button></form>${message()}`;restoreInput();return}
   const q=currentQuestion();
   app.innerHTML=`<div class="panelTop"><span>HOST CONTROL</span><span>CODE: BUFF</span></div>${statusLine()}<div class="hostQuestion"><p class="eyebrow">QUESTION ${quiz?.current_question_number||0} / ${questions.length}</p><h1>${esc(q?.prompt|| (quiz?.status==='finished'?'Quiz complete!':'Ready to begin?'))}</h1>${quiz?.status==='question'?`<div class="timer">${remaining}</div>`:''}${quiz?.status==='revealed'?`<div class="answerReveal"><small>OFFICIAL ANSWER</small><h2>${esc(quiz.revealed_answer||'')}</h2></div>`:''}${quiz?.status==='finished'?'<p>All questions are complete.</p>':''}</div><div class="actions">${btn('Start quiz','start')}${btn('Reveal answer','reveal')}${btn('Next question','next')}${btn('Reset quiz','reset','danger')}${btn('Sign out','signout','secondary')}</div>${leaderboard()}${message()}`;
  }else if(!participant){
@@ -35,6 +37,7 @@ function render(){
   if(quiz?.status==='finished')content='<div class="hostQuestion"><h1>Quiz complete!</h1><p>Thanks for playing Bollywood Buff.</p></div>';
   app.innerHTML=`${statusLine()}${content}${leaderboard()}${message()}`;
  }
+ restoreInput();
 }
 function message(){return notice?`<p class="notice">${esc(notice)}</p>`:''}
 async function loadState(){
